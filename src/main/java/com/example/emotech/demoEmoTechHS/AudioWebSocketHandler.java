@@ -47,6 +47,12 @@ import com.example.emotech.demoEmoTechHS.data.Audio;
 import com.example.emotech.demoEmoTechHS.repository.AudioRepository;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Establishes WebSocket connections to handle audio streaming and file creation upon
+ * receiving specific messages from clients. It utilizes Spring framework components
+ * for WebSocket management and repository interactions. The class also includes error
+ * handling mechanisms for transport errors.
+ */
 @RequiredArgsConstructor
 public class AudioWebSocketHandler extends TextWebSocketHandler{
 
@@ -63,6 +69,30 @@ public class AudioWebSocketHandler extends TextWebSocketHandler{
 
 	private byte[]  partialMessageResponseBuilder = null;
 
+	/**
+	 * Processes incoming WebSocket messages, checks if they contain audio data and if
+	 * it's a "STOP" command to create an audio file from accumulated partial responses.
+	 * It then saves the resulting WAV file to the database.
+	 *
+	 * @param session WebSocket session of the client making the request, used for sending
+	 * messages back to the client.
+	 *
+	 * Set: WebSocketSession
+	 * Properties:
+	 * - Local address
+	 * - Remote address
+	 * - Principal
+	 * - Attributes
+	 *
+	 * @param message TextMessage being received from the WebSocket session, containing
+	 * audio data that is processed and handled by the function.
+	 *
+	 * Extract - message.getPayload(): Returns the payload (the actual data) contained
+	 * within the message.
+	 * Data type - String.
+	 * The main property is: Payload contains an object of Audio class which holds name
+	 * and other details of audio file.
+	 */
 	@Override
 	protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
 
@@ -132,6 +162,14 @@ public class AudioWebSocketHandler extends TextWebSocketHandler{
 
 	}
 
+	/**
+	 * Adds a WebSocket session to a collection, then calls its superclass method with
+	 * the established session as an argument. This establishes the session and enables
+	 * further actions on it. The added session is tracked for future use.
+	 *
+	 * @param session WebSocket connection established with a client, which is then stored
+	 * and managed by the class instance.
+	 */
 	@Override
 	public void afterConnectionEstablished(WebSocketSession session) throws Exception {
 		
@@ -139,6 +177,17 @@ public class AudioWebSocketHandler extends TextWebSocketHandler{
 		super.afterConnectionEstablished(session);
 	}
 
+	/**
+	 * Removes a closed WebSocket session from a collection and logs the closure reason.
+	 * It then calls the superclass method to complete any necessary cleanup. The session
+	 * is effectively ended and cleared after its connection has been closed.
+	 *
+	 * @param session WebSocket session that has been closed, providing access to its
+	 * state and allowing for removal from the sessions collection.
+	 *
+	 * @param status reason for closing the WebSocket connection, which can be retrieved
+	 * using its `getReason()` method.
+	 */
 	@Override
 	public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
 		
@@ -148,16 +197,49 @@ public class AudioWebSocketHandler extends TextWebSocketHandler{
 		
 	}
 
+	/**
+	 * Logs a transport error with an associated exception for a WebSocket session. It
+	 * utilizes a logging utility to record the error at level "error" and provides the
+	 * exception as context. The error is logged via the `log1.error` method.
+	 *
+	 * @param session WebSocket connection that has experienced an error and is passed
+	 * to facilitate logging and potential further actions related to it.
+	 *
+	 * @param exception throwable that caused the transport error in the WebSocket connection.
+	 */
 	@Override
 	public void handleTransportError(WebSocketSession session, Throwable exception) {
 		log1.error("Transport Error", exception);
 	}
 
+	/**
+	 * Returns a boolean value indicating whether partial messages are supported. In this
+	 * implementation, partial messages are not supported, as indicated by the return
+	 * value of `false`. This suggests that the component or class implementing this
+	 * method only accepts complete or full messages.
+	 *
+	 * @returns a boolean value indicating it does not support partial messages, always
+	 * returning false.
+	 */
 	@Override
 	public boolean supportsPartialMessages() {
 		return false;
 	}
 
+	/**
+	 * Concatenates two byte arrays into a single array by allocating a new ByteBuffer
+	 * with sufficient capacity, writing the first byte array followed by the second, and
+	 * then converting the ByteBuffer to an array. The result is a new array containing
+	 * all elements from both input arrays.
+	 *
+	 * @param byte1 first array of bytes that will be concatenated with another array of
+	 * bytes, represented by `byte2`.
+	 *
+	 * @param byte2 2nd byte array to be concatenated with the first one, `byte1`, into
+	 * a single byte array.
+	 *
+	 * @returns a new combined byte array.
+	 */
 	public static byte[] joinByteArray(byte[] byte1, byte[] byte2) {
 
         return ByteBuffer.allocate(byte1.length + byte2.length)
